@@ -17,6 +17,14 @@
 -
 -->
 
+# Vulkan Masters
+
+## Acknowledgements
+
+The code base contains
+* [Vulkan-Samples](https://github.com/KhronosGroup/Vulkan-Samples)
+* [Mastering-Graphics-Programming-with-Vulkan](https://github.com/PacktPublishing/Mastering-Graphics-Programming-with-Vulkan)
+
 # Vulkan Samples <!-- omit in toc -->
 
 ![Vulkan Samples banner](banner.jpg)
