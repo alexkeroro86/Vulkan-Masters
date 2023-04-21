@@ -19,6 +19,15 @@
 
 # Vulkan Masters
 
+Additional features include:
+* Scene graph with ray tracing scene
+  * [BRDF Importance Sampling for Polygonal Lights](https://github.com/MomentsInGraphics/vulkan_renderer)
+* Vertex skinning
+  * [Permutation Coding for Vertex-Blend Attribute Compression](https://github.com/MomentsInGraphics/vulkan_renderer/tree/blend_attributes)
+* Frame graph with render pipeline
+  * [FrameGraph: Extensible Rendering Architecture in Frostbite](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in)
+* Multi-thread scheme
+
 ## Acknowledgements
 
 The code base contains
