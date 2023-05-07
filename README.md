@@ -26,6 +26,9 @@ Additional features include:
   * [Permutation Coding for Vertex-Blend Attribute Compression](https://github.com/MomentsInGraphics/vulkan_renderer/tree/blend_attributes)
 * Frame graph with render pipeline
   * [FrameGraph: Extensible Rendering Architecture in Frostbite](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in)
+* Stats tracker
+  * CPU time
+  * GPU time
 * Multi-thread scheme
 
 ## Acknowledgements
