@@ -79,6 +79,7 @@ set(ORDER_LIST
     "vertex_dynamic_state"
     "extended_dynamic_state2"
     "logic_op_dynamic_state"
+    "ray_queries_scene_graph"
 
     #Performance Samples
     "swapchain_images"
@@ -101,6 +102,7 @@ set(ORDER_LIST
     "async_compute"
     "multi_draw_indirect"
     "texture_compression_comparison"
+    "ray_tracing_scene_graph"
 
     #Tooling samples
     "profiles"

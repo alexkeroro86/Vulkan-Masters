@@ -27,8 +27,8 @@ Additional features include:
 * Frame graph with render pipeline
   * [FrameGraph: Extensible Rendering Architecture in Frostbite](https://www.gdcvault.com/play/1024612/FrameGraph-Extensible-Rendering-Architecture-in)
 * Stats tracker
-  * CPU time
-  * GPU time
+  * CPU time: `update_scene`, `update_gui`, `update_stats`, `draw`, `submit`
+  * GPU time: `subpass->draw`, `gui->draw`
 * Multi-thread scheme
 
 ## Acknowledgements

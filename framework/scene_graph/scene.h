@@ -26,6 +26,11 @@
 
 #include "scene_graph/components/light.h"
 #include "scene_graph/components/texture.h"
+#include "common/ray_tracing_common.h"
+
+#ifdef ENABLE_RAYTRACING_SCENE_GRAPH
+#include <core/acceleration_structure.h>
+#endif
 
 namespace vkb
 {
@@ -129,6 +134,16 @@ class Scene
 	void set_root_node(Node &node);
 
 	Node &get_root_node();
+
+#ifdef ENABLE_RAYTRACING_SCENE_GRAPH
+  public:
+	void build_acceleration_structure(vkb::Device const &device);
+	std::unique_ptr<vkb::core::AccelerationStructure>& get_acceleration_structure();
+
+  private:
+	std::unique_ptr<vkb::core::AccelerationStructure>              top_level_acceleration_structure;
+	std::vector<std::unique_ptr<vkb::core::AccelerationStructure>> bottom_level_acceleration_structures;
+#endif
 
   private:
 	std::string name;

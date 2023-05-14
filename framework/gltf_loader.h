@@ -30,6 +30,8 @@
 
 #define KHR_LIGHTS_PUNCTUAL_EXTENSION "KHR_lights_punctual"
 
+#include "common/ray_tracing_common.h"
+
 namespace vkb
 {
 class Device;

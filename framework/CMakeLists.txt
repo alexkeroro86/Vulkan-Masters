@@ -85,6 +85,7 @@ set(COMMON_FILES
     common/hpp_strings.h
     common/hpp_utils.h
     common/hpp_vk_common.h
+    common/ray_tracing_common.h
     # Source Files
     common/error.cpp
     common/vk_common.cpp

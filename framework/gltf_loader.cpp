@@ -689,9 +689,19 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 					submesh->vertices_count = to_u32(model.accessors[attribute.second].count);
 				}
 
+				VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+
+#ifdef ENABLE_RAYTRACING_SCENE_GRAPH
+				if (attrib_name == "position")
+				{
+					// TODO: VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+					buffer_usage_flags |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+				}
+#endif
+
 				core::Buffer buffer{device,
 				                    vertex_data.size(),
-				                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				                    buffer_usage_flags,
 				                    VMA_MEMORY_USAGE_GPU_TO_CPU};
 				buffer.update(vertex_data);
 				buffer.set_debug_name(fmt::format("'{}' mesh, primitive #{}: '{}' vertex buffer",
@@ -704,6 +714,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				attrib.stride = to_u32(get_attribute_stride(&model, attribute.second));
 
 				submesh->set_attribute(attrib_name, attrib);
+
+				LOGI("Loaded gltf mesh '{}', primitive #{}: '{}' vertex buffer with stride '{}' and format '{}'", gltf_mesh.name, i_primitive, attrib_name, attrib.stride, vkb::to_string(attrib.format));
 			}
 
 			if (gltf_primitive.indices >= 0)
@@ -732,14 +744,23 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 						break;
 				}
 
+				VkBufferUsageFlags index_buffer_usage_flags = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+
+#ifdef ENABLE_RAYTRACING_SCENE_GRAPH
+				// TODO: VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+				index_buffer_usage_flags |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+#endif
+
 				submesh->index_buffer = std::make_unique<core::Buffer>(device,
 				                                                       index_data.size(),
-				                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+				                                                       index_buffer_usage_flags,
 				                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
 				submesh->index_buffer->set_debug_name(fmt::format("'{}' mesh, primitive #{}: index buffer",
 				                                                  gltf_mesh.name, i_primitive));
 
 				submesh->index_buffer->update(index_data);
+
+				LOGI("Loaded gltf mesh '{}', primitive #{}: index buffer with format '{}'", gltf_mesh.name, i_primitive, vkb::to_string(submesh->index_type));
 			}
 			else
 			{
@@ -1021,6 +1042,10 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 		// Add a default light if none are present
 		vkb::add_directional_light(scene, glm::quat({glm::radians(-90.0f), 0.0f, glm::radians(30.0f)}));
 	}
+
+#ifdef ENABLE_RAYTRACING_SCENE_GRAPH
+	scene.build_acceleration_structure(device);
+#endif
 
 	return scene;
 }
