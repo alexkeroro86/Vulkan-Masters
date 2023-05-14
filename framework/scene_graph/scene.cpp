@@ -21,6 +21,7 @@
 
 #include "component.h"
 #include "components/sub_mesh.h"
+#include "components/mesh.h"
 #include "node.h"
 
 #ifdef ENABLE_RAYTRACING_SCENE_GRAPH
@@ -189,27 +190,43 @@ void Scene::build_acceleration_structure(vkb::Device const &device)
 			    0, attrib.format, VK_INDEX_TYPE_NONE_KHR, VK_GEOMETRY_OPAQUE_BIT_KHR,
 			    vertex_buffer_iter->second.get_device_address());
 		}
-
-		bottom_level_acceleration_structures.push_back(std::move(bottom_level_acceleration_structure));
+		bottom_level_acceleration_structures[submesh] = std::move(bottom_level_acceleration_structure);
+		bottom_level_acceleration_structures[submesh]->build(device.get_suitable_graphics_queue().get_handle(), VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 	}
 
 	// Prepare a single instance per BLAS
 	top_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(const_cast<vkb::Device &>(device), VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR);
-	size_t instances_count = bottom_level_acceleration_structures.size();
 	std::vector<VkAccelerationStructureInstanceKHR> acceleration_structure_instances;
-	acceleration_structure_instances.resize(instances_count);
-	for (size_t i = 0; i < instances_count; ++i)
+	
+	for (auto& mesh : get_components<vkb::sg::Mesh>())
 	{
-		bottom_level_acceleration_structures[i]->build(device.get_suitable_graphics_queue().get_handle(), VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
-		LOGI("Built BLAS");
+		for (auto& node : mesh->get_nodes())
+		{
+			for (auto& submesh : mesh->get_submeshes())
+			{
+				auto iter = bottom_level_acceleration_structures.find(submesh);
+				if (iter != bottom_level_acceleration_structures.end())
+				{
+					// TODO: Overlapping makes transformation complex
+					//auto instance_transform_matrix = node->get_transform().get_world_matrix();
+					VkAccelerationStructureInstanceKHR acceleration_structure_instance;
+					//acceleration_structure_instance.transform = {instance_transform_matrix[0][0], instance_transform_matrix[0][1], instance_transform_matrix[0][2], instance_transform_matrix[0][3],
+					//                                             instance_transform_matrix[1][0], instance_transform_matrix[1][1], instance_transform_matrix[1][2], instance_transform_matrix[1][3],
+					//                                             instance_transform_matrix[2][0], instance_transform_matrix[2][1], instance_transform_matrix[2][2], instance_transform_matrix[2][3]};
+					acceleration_structure_instance.transform                                  = transform_matrix;
+					acceleration_structure_instance.instanceCustomIndex                        = 0;
+					acceleration_structure_instance.mask                                       = 0xFF;
+					acceleration_structure_instance.instanceShaderBindingTableRecordOffset     = 0;
+					acceleration_structure_instance.flags                                      = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+					acceleration_structure_instance.accelerationStructureReference             = iter->second->get_device_address();
 
-		acceleration_structure_instances[i].transform                              = transform_matrix;
-		acceleration_structure_instances[i].instanceCustomIndex                    = 0;
-		acceleration_structure_instances[i].mask                                   = 0xFF;
-		acceleration_structure_instances[i].instanceShaderBindingTableRecordOffset = 0;
-		acceleration_structure_instances[i].flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-		acceleration_structure_instances[i].accelerationStructureReference         = bottom_level_acceleration_structures[i]->get_device_address();
+					acceleration_structure_instances.push_back(acceleration_structure_instance);
+				}
+			}
+		}
 	}
+
+	size_t instances_count = acceleration_structure_instances.size();
 
 	std::unique_ptr<vkb::core::Buffer> instances_buffer = std::make_unique<vkb::core::Buffer>(device,
 	                                                                                          sizeof(VkAccelerationStructureInstanceKHR) * instances_count,

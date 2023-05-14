@@ -39,6 +39,7 @@ namespace sg
 class Node;
 class Component;
 class SubMesh;
+class Mesh;
 
 /// @brief A collection of nodes organized in a tree structure.
 ///		   It can contain more than one root node.
@@ -142,7 +143,7 @@ class Scene
 
   private:
 	std::unique_ptr<vkb::core::AccelerationStructure>              top_level_acceleration_structure;
-	std::vector<std::unique_ptr<vkb::core::AccelerationStructure>> bottom_level_acceleration_structures;
+	std::unordered_map<vkb::sg::SubMesh*, std::unique_ptr<vkb::core::AccelerationStructure>> bottom_level_acceleration_structures;
 #endif
 
   private:
