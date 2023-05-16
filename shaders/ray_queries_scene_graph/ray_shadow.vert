@@ -41,9 +41,9 @@ void main(void)
 	// We want to be able to perform ray tracing, so don't apply any matrix to scene_pos
 	scene_pos = vec4(position, 1);
 
-	o_pos = scene_pos;
+	o_pos = global_uniform.model * scene_pos;
 
-	o_normal = normal;
+	o_normal = mat3(global_uniform.model) * normal;
 
 	gl_Position = global_uniform.view_proj * o_pos;
 }

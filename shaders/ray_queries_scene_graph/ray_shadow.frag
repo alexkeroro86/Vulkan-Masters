@@ -57,7 +57,7 @@ bool intersects_light(vec3 light_origin, vec3 pos)
 
 float intersects_camera(vec3 camera_position, vec3 direction)
 {
-	const float tmin = 0.01, tmax = 1000;
+	const float tmin = 0.01, tmax = 5000;
 
 	rayQueryEXT query;
 	rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsOpaqueEXT, 0xFF, camera_position, tmin, direction, tmax);
@@ -74,16 +74,16 @@ void main(void)
 	vec3 normal = normalize(in_normal);
 	o_color = vec4(normal * 0.5 + 0.5, 1);
 
-	vec3 light = normalize(global_uniform.light_position.xyz - in_scene_pos.xyz);
-	float lambert = max(dot(normal, light), 0);
-	o_color = vec4(lambert * vec3(1), 1);
+	// vec3 light = normalize(global_uniform.light_position.xyz - in_pos.xyz);
+	// float lambert = max(dot(normal, light), 0);
+	// o_color = vec4(lambert * vec3(1), 1);
 
 	//const float lighting = intersects_light(global_uniform.light_position, in_pos.xyz) ? 0.2 : 1;
 
-	//const float lighting = intersects_camera(global_uniform.camera_position, in_scene_pos.xyz);
-	//o_color = vec4(lighting * vec3(1, 1, 1), 1);
+	// vec3 dist = global_uniform.camera_position.xyz - in_pos.xyz;
+	// o_color = vec4(sqrt(dot(dist, dist)) / 5000 * vec3(1), 1);
 
-	vec4 camera = (global_uniform.model) * global_uniform.camera_position;
+	vec4 camera = global_uniform.camera_position;
 	vec3 direction = normalize(in_pos.xyz - camera.xyz);
 	float dist = intersects_camera(camera.xyz, direction);
 	o_color = vec4(dist * vec3(1), 1);
