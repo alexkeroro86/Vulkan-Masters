@@ -332,7 +332,7 @@ void RayQueriesSceneGraph::create_uniforms()
 void RayQueriesSceneGraph::update_uniform_buffers(vkb::sg::Node &node)
 {
 	assert(!!uniform_buffer);
-	global_uniform.camera_position = scene_camera->get_node()->get_transform().get_translation();
+	global_uniform.camera_position = glm::vec4(scene_camera->get_node()->get_transform().get_translation(), 1);
 	// Note: Using Reversed depth-buffer for increased precision
 	global_uniform.view_proj       = scene_camera->get_pre_rotation() * vkb::vulkan_style_projection(scene_camera->get_projection()) * scene_camera->get_view();
 	global_uniform.model           = node.get_transform().get_world_matrix();
@@ -341,7 +341,7 @@ void RayQueriesSceneGraph::update_uniform_buffers(vkb::sg::Node &node)
 	//const float P                 = 2.f * 3.14159f / 5000.f;
 	//const float t                 = static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start_time).count()) / 1000.f;
 	//global_uniform.light_position = glm::vec3(2 * R * cosf(t * P), R * sinf(t * P), -10.f);
-	global_uniform.light_position = global_uniform.camera_position;
+	global_uniform.light_position = scene_camera->get_node()->get_transform().get_world_matrix() * glm::vec4(0, 0, -100, 1);
 
 	uniform_buffer->update(&global_uniform, sizeof(global_uniform));
 }

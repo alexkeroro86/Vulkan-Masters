@@ -27,8 +27,8 @@ layout(set = 0, binding = 1) uniform GlobalUniform
 {
 	mat4 view_proj;
 	mat4 model;
-	vec3 camera_position;
-	vec3 light_position;
+	vec4 camera_position;
+	vec4 light_position;
 }
 global_uniform;
 
@@ -41,9 +41,9 @@ void main(void)
 	// We want to be able to perform ray tracing, so don't apply any matrix to scene_pos
 	scene_pos = vec4(position, 1);
 
-	o_pos = global_uniform.model * scene_pos;
+	o_pos = scene_pos;
 
-	o_normal = mat3(global_uniform.model) * normal;
+	o_normal = normal;
 
 	gl_Position = global_uniform.view_proj * o_pos;
 }

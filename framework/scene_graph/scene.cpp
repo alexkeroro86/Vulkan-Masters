@@ -155,6 +155,8 @@ void Scene::build_acceleration_structure(vkb::Device const &device)
 	std::unique_ptr<vkb::core::Buffer> transform_matrix_buffer = std::make_unique<core::Buffer>(device, sizeof(transform_matrix), VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
+	auto none = std::unique_ptr<core::Buffer>(nullptr);
+
 	// Prepare a single BLAS per SubMesh
 	for (auto& submesh : get_components<SubMesh>())
 	{
@@ -169,7 +171,7 @@ void Scene::build_acceleration_structure(vkb::Device const &device)
 		if (submesh->vertex_indices >= 0)
 		{
 			bottom_level_acceleration_structure->add_triangle_geometry(
-			    std::unique_ptr<core::Buffer>(nullptr),
+			    none,
 			    submesh->index_buffer,
 			    transform_matrix_buffer,
 			    submesh->vertex_indices / 3,
@@ -181,8 +183,8 @@ void Scene::build_acceleration_structure(vkb::Device const &device)
 		else
 		{
 			bottom_level_acceleration_structure->add_triangle_geometry(
-			    std::unique_ptr<core::Buffer>(nullptr),
-			    std::unique_ptr<core::Buffer>(nullptr),
+			    none,
+			    none,
 			    transform_matrix_buffer,
 			    submesh->vertices_count / 3,
 			    submesh->vertices_count,
@@ -208,11 +210,11 @@ void Scene::build_acceleration_structure(vkb::Device const &device)
 				if (iter != bottom_level_acceleration_structures.end())
 				{
 					// TODO: Overlapping makes transformation complex
-					//auto instance_transform_matrix = node->get_transform().get_world_matrix();
+					// auto instance_transform_matrix = node->get_transform().get_world_matrix();
 					VkAccelerationStructureInstanceKHR acceleration_structure_instance;
-					//acceleration_structure_instance.transform = {instance_transform_matrix[0][0], instance_transform_matrix[0][1], instance_transform_matrix[0][2], instance_transform_matrix[0][3],
-					//                                             instance_transform_matrix[1][0], instance_transform_matrix[1][1], instance_transform_matrix[1][2], instance_transform_matrix[1][3],
-					//                                             instance_transform_matrix[2][0], instance_transform_matrix[2][1], instance_transform_matrix[2][2], instance_transform_matrix[2][3]};
+					// acceleration_structure_instance.transform = {instance_transform_matrix[0][0], instance_transform_matrix[0][1], instance_transform_matrix[0][2], instance_transform_matrix[0][3],
+					//                                              instance_transform_matrix[1][0], instance_transform_matrix[1][1], instance_transform_matrix[1][2], instance_transform_matrix[1][3],
+					//                                              instance_transform_matrix[2][0], instance_transform_matrix[2][1], instance_transform_matrix[2][2], instance_transform_matrix[2][3]};
 					acceleration_structure_instance.transform                                  = transform_matrix;
 					acceleration_structure_instance.instanceCustomIndex                        = 0;
 					acceleration_structure_instance.mask                                       = 0xFF;

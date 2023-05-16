@@ -45,8 +45,8 @@ class RayQueriesSceneGraph : public ApiVulkanSample
 	{
 		glm::mat4x4 view_proj;
 		glm::mat4x4 model;
-		alignas(4) glm::vec3 camera_position;
-		alignas(4) glm::vec3 light_position;
+		glm::vec4 camera_position;
+		glm::vec4 light_position;
 	} global_uniform;
 
 	std::chrono::high_resolution_clock::time_point start_time{std::chrono::high_resolution_clock::now()};

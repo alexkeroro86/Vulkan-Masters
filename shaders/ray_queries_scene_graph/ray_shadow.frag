@@ -28,10 +28,10 @@ layout(set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
 
 layout(set = 0, binding = 1) uniform GlobalUniform
 {
-	mat4 model;
 	mat4 view_proj;
-	vec3 camera_position;
-	vec3 light_position;
+	mat4 model;
+	vec4 camera_position;
+	vec4 light_position;
 }
 global_uniform;
 
@@ -41,50 +41,50 @@ Apply ray tracing to determine whether the point intersects light
 */
 bool intersects_light(vec3 light_origin, vec3 pos)
 {
-	const float tmin = 0.01, tmax = 4000;
+	const float tmin = 0.01;
 	const vec3  direction = light_origin - pos;
 
 	rayQueryEXT query;
 
-	// The following runs the actual ray query
-	// For performance, use gl_RayFlagsTerminateOnFirstHitEXT, since we only need to know
-	// whether an intersection exists, and not necessarily any particular intersection
 	rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, pos, tmin, direction.xyz, 1.0);
-	// The following is the canonical way of using ray Queries from the fragment shader when
-	// there's more than one bounce or hit to traverse:
-	// while (rayQueryProceedEXT(query)) { }
-	// This sample has set flags to gl_RayFlagsTerminateOnFirstHitEXT which means that there
-	// will never be a bounce and no need for an expensive while loop.  (i.e. we only need to call it once).
 	rayQueryProceedEXT(query);
 	if (rayQueryGetIntersectionTypeEXT(query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
 	{
-		// e.g. to get distance:
-		// const float dist = rayQueryGetIntersectionTEXT(query, false);
 		return true;
 	}
 	return false;
 }
 
-float intersects_camera(vec3 camera_position, vec3 pos)
+float intersects_camera(vec3 camera_position, vec3 direction)
 {
-	const float tmin = 0.01, tmax = 4000;
-	const vec3  direction = normalize(pos - camera_position);
+	const float tmin = 0.01, tmax = 1000;
 
 	rayQueryEXT query;
-	rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsOpaqueEXT, 0xFF, camera_position, tmin, direction.xyz, tmax);
+	rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsOpaqueEXT, 0xFF, camera_position, tmin, direction, tmax);
 	rayQueryProceedEXT(query);
 	if (rayQueryGetIntersectionTypeEXT(query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
 	{
-		return rayQueryGetIntersectionTEXT(query, true) / 100.0;
+		return rayQueryGetIntersectionTEXT(query, true) / tmax;
 	}
 	return 0;
 }
 
 void main(void)
 {
-	//vec3 normal = normalize(in_normal);
-	//o_color = vec4(normal * 0.5 + 0.5, 1.0);
+	vec3 normal = normalize(in_normal);
+	o_color = vec4(normal * 0.5 + 0.5, 1);
+
+	vec3 light = normalize(global_uniform.light_position.xyz - in_scene_pos.xyz);
+	float lambert = max(dot(normal, light), 0);
+	o_color = vec4(lambert * vec3(1), 1);
+
 	//const float lighting = intersects_light(global_uniform.light_position, in_pos.xyz) ? 0.2 : 1;
-	const float lighting = intersects_camera(global_uniform.camera_position, in_scene_pos.xyz);
-	o_color = vec4(lighting * vec3(1, 1, 1), 1);
+
+	//const float lighting = intersects_camera(global_uniform.camera_position, in_scene_pos.xyz);
+	//o_color = vec4(lighting * vec3(1, 1, 1), 1);
+
+	vec4 camera = (global_uniform.model) * global_uniform.camera_position;
+	vec3 direction = normalize(in_pos.xyz - camera.xyz);
+	float dist = intersects_camera(camera.xyz, direction);
+	o_color = vec4(dist * vec3(1), 1);
 }
