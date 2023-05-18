@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include "ray_queries_scene_graph.h"
 #include "gltf_loader.h"
 #include "platform/filesystem.h"
@@ -130,6 +132,7 @@ void RayQueriesSceneGraph::build_command_buffers()
 
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+		update_uniform_buffers();
 		
 		for (auto& mesh : scene->get_components<vkb::sg::Mesh>())
 		{
@@ -137,11 +140,12 @@ void RayQueriesSceneGraph::build_command_buffers()
 			{
 				for (auto& submesh : mesh->get_submeshes())
 				{
+					vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, static_cast<uint32_t>(sizeof(glm::mat4)), glm::value_ptr(node->get_transform().get_world_matrix()));
+
 					auto position_buffer_iter = submesh->vertex_buffers.find("position");
 					auto normal_buffer_iter   = submesh->vertex_buffers.find("normal");
 					if (position_buffer_iter != submesh->vertex_buffers.end() && normal_buffer_iter != submesh->vertex_buffers.end())
 					{
-						update_uniform_buffers(*node);
 
 						std::vector<VkBuffer>     buffers = {position_buffer_iter->second.get_handle(), normal_buffer_iter->second.get_handle()};
 						std::vector<VkDeviceSize> offsets = {0, 0};
@@ -184,10 +188,12 @@ bool RayQueriesSceneGraph::prepare(vkb::Platform &platform)
 	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
 
 	// Load a scene from the assets folder
-	load_scene("scenes/sponza/Sponza01.gltf");
+	//load_scene("scenes/sponza/Sponza01.gltf");
+	load_scene("scenes/Bistro_v5_2/BistroExterior.gltf");
 
 	// Attach a move script to the camera component in the scene
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	camera_node.get_transform().set_translation(glm::vec3(-10, 5, 0));
 	scene_camera      = &camera_node.get_component<vkb::sg::Camera>();
 
 	create_uniforms();
@@ -216,10 +222,9 @@ void RayQueriesSceneGraph::create_descriptor_pool()
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layout,
-	        1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
+	pipeline_layout_create_info.pPushConstantRanges        = &vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, static_cast<uint32_t>(sizeof(glm::mat4)), 0);
+	pipeline_layout_create_info.pushConstantRangeCount     = 1;
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
@@ -267,7 +272,7 @@ void RayQueriesSceneGraph::prepare_pipelines()
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision
+	// NOTE: Using Reversed depth-buffer for increased precision
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 	depth_stencil_state.depthBoundsTestEnable                 = VK_FALSE;
 	depth_stencil_state.minDepthBounds                        = 0.f;
@@ -321,6 +326,7 @@ void RayQueriesSceneGraph::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 
+// TODO: https://github.com/SaschaWillems/Vulkan/blob/master/examples/dynamicuniformbuffer/README.md
 void RayQueriesSceneGraph::create_uniforms()
 {
 	uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
@@ -329,18 +335,12 @@ void RayQueriesSceneGraph::create_uniforms()
 	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
-void RayQueriesSceneGraph::update_uniform_buffers(vkb::sg::Node &node)
+void RayQueriesSceneGraph::update_uniform_buffers()
 {
 	assert(!!uniform_buffer);
 	global_uniform.camera_position = glm::vec4(scene_camera->get_node()->get_transform().get_translation(), 1);
-	// Note: Using Reversed depth-buffer for increased precision
+	// NOTE: Using Reversed depth-buffer for increased precision
 	global_uniform.view_proj       = scene_camera->get_pre_rotation() * vkb::vulkan_style_projection(scene_camera->get_projection()) * scene_camera->get_view();
-	global_uniform.model           = node.get_transform().get_world_matrix();
-
-	//const float R                 = 1.f;
-	//const float P                 = 2.f * 3.14159f / 5000.f;
-	//const float t                 = static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start_time).count()) / 1000.f;
-	//global_uniform.light_position = glm::vec3(2 * R * cosf(t * P), R * sinf(t * P), -10.f);
 	global_uniform.light_position = scene_camera->get_node()->get_transform().get_world_matrix() * glm::vec4(0, 0, -100, 1);
 
 	uniform_buffer->update(&global_uniform, sizeof(global_uniform));

@@ -29,16 +29,17 @@ layout(set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
 layout(set = 0, binding = 1) uniform GlobalUniform
 {
 	mat4 view_proj;
-	mat4 model;
 	vec4 camera_position;
 	vec4 light_position;
 }
 global_uniform;
 
+layout(push_constant) uniform MeshData
+{
+	mat4 model;
+} mesh_data;
 
-/**
-Apply ray tracing to determine whether the point intersects light
-*/
+
 bool intersects_light(vec3 light_origin, vec3 pos)
 {
 	const float tmin = 0.01;

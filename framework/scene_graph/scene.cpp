@@ -209,14 +209,12 @@ void Scene::build_acceleration_structure(vkb::Device const &device)
 				auto iter = bottom_level_acceleration_structures.find(submesh);
 				if (iter != bottom_level_acceleration_structures.end())
 				{
-					// TODO: object-to-world or world-to-object matrix?
+					// NOTE: column major
 					auto instance_transform_matrix = node->get_transform().get_world_matrix();
-					instance_transform_matrix      = glm::transpose(instance_transform_matrix);
 					VkAccelerationStructureInstanceKHR acceleration_structure_instance;
-					acceleration_structure_instance.transform = {instance_transform_matrix[0][0], instance_transform_matrix[0][1], instance_transform_matrix[0][2], instance_transform_matrix[0][3],
-					                                             instance_transform_matrix[1][0], instance_transform_matrix[1][1], instance_transform_matrix[1][2], instance_transform_matrix[1][3],
-					                                             instance_transform_matrix[2][0], instance_transform_matrix[2][1], instance_transform_matrix[2][2], instance_transform_matrix[2][3]};
-					//acceleration_structure_instance.transform                                  = transform_matrix;
+					acceleration_structure_instance.transform = {instance_transform_matrix[0].x, instance_transform_matrix[1].x, instance_transform_matrix[2].x, instance_transform_matrix[3].x,
+					                                             instance_transform_matrix[0].y, instance_transform_matrix[1].y, instance_transform_matrix[2].y, instance_transform_matrix[3].y,
+					                                             instance_transform_matrix[0].z, instance_transform_matrix[1].z, instance_transform_matrix[2].z, instance_transform_matrix[3].z};
 					acceleration_structure_instance.instanceCustomIndex                        = 0;
 					acceleration_structure_instance.mask                                       = 0xFF;
 					acceleration_structure_instance.instanceShaderBindingTableRecordOffset     = 0;

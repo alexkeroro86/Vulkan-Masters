@@ -44,7 +44,6 @@ class RayQueriesSceneGraph : public ApiVulkanSample
 	struct GlobalUniform
 	{
 		glm::mat4x4 view_proj;
-		glm::mat4x4 model;
 		glm::vec4 camera_position;
 		glm::vec4 light_position;
 	} global_uniform;
@@ -68,7 +67,7 @@ class RayQueriesSceneGraph : public ApiVulkanSample
 	void create_descriptor_pool();
 	void create_descriptor_sets();
 	void prepare_pipelines();
-	void update_uniform_buffers(vkb::sg::Node& node);
+	void update_uniform_buffers();
 	void draw();
 };
 

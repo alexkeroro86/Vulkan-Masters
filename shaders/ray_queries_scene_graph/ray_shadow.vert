@@ -26,24 +26,29 @@ layout(set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
 layout(set = 0, binding = 1) uniform GlobalUniform
 {
 	mat4 view_proj;
-	mat4 model;
 	vec4 camera_position;
 	vec4 light_position;
 }
 global_uniform;
 
+layout(push_constant) uniform MeshData
+{
+	mat4 model;
+} mesh_data;
+
 layout(location = 0) out vec4 o_pos;
 layout(location = 1) out vec3 o_normal;
 layout(location = 2) out vec4 scene_pos;        // scene with respect to BVH coordinates
+
 
 void main(void)
 {
 	// We want to be able to perform ray tracing, so don't apply any matrix to scene_pos
 	scene_pos = vec4(position, 1);
 
-	o_pos = global_uniform.model * scene_pos;
+	o_pos = mesh_data.model * scene_pos;
 
-	o_normal = mat3(global_uniform.model) * normal;
+	o_normal = mat3(mesh_data.model) * normal;
 
 	gl_Position = global_uniform.view_proj * o_pos;
 }
