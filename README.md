@@ -31,6 +31,16 @@ Additional features include:
   * GPU time: `subpass->draw`, `gui->draw`
 * Multi-thread scheme
 
+## Features
+
+### Ray Tracing Scene Graph
+
+Basic directional light shadow
+![ray_queries_scene_graph](samples/extensions/ray_queries_scene_graph/images/ray_queries_scene_graph.png)
+
+Basic acceleration structures
+![nsight_as](samples/extensions/ray_queries_scene_graph/images/nsight_as.png)
+
 ## Acknowledgements
 
 The code base contains
