@@ -102,19 +102,19 @@ void RayQueriesSceneGraph::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Light"))
 	{
-		if (drawer.slider_float("X", &(global_uniform.light_position.x), -1, 1))
+		if (drawer.slider_float("Position.x", &(global_uniform.light_position.x), -1, 1))
 		{
 		}
 
-		if (drawer.slider_float("Y", &(global_uniform.light_position.y), -1, 1))
+		if (drawer.slider_float("Position.y", &(global_uniform.light_position.y), -1, 1))
 		{
 		}
 
-		if (drawer.slider_float("Z", &(global_uniform.light_position.z), -1, 1))
+		if (drawer.slider_float("Position.z", &(global_uniform.light_position.z), -1, 1))
 		{
 		}
 
-		if (drawer.slider_float("W", &(global_uniform.light_position.z), -1, 1))
+		if (drawer.slider_float("Extra", &(global_uniform.light_position.z), 0, 5))
 		{
 		}
 	}
