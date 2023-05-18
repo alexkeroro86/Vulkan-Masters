@@ -39,13 +39,14 @@ class RayQueriesSceneGraph : public ApiVulkanSample
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void render(float delta_time) override;
 	bool prepare(vkb::Platform &platform) override;
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
 	struct GlobalUniform
 	{
 		glm::mat4x4 view_proj;
 		glm::vec4 camera_position;
-		glm::vec4 light_position;
+		glm::vec4   light_position{0, 1, 0, 0};
 	} global_uniform;
 
 	std::chrono::high_resolution_clock::time_point start_time{std::chrono::high_resolution_clock::now()};

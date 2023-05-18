@@ -38,7 +38,7 @@ layout(push_constant) uniform MeshData
 
 layout(location = 0) out vec4 o_pos;
 layout(location = 1) out vec3 o_normal;
-layout(location = 2) out vec4 scene_pos;        // scene with respect to BVH coordinates
+layout(location = 2) out vec4 scene_pos;  // scene with respect to BVH coordinates
 
 
 void main(void)
@@ -48,7 +48,8 @@ void main(void)
 
 	o_pos = mesh_data.model * scene_pos;
 
-	o_normal = mat3(mesh_data.model) * normal;
+	// TODO: inverse model
+	o_normal = mat3(transpose(inverse(mesh_data.model))) * normal;
 
 	gl_Position = global_uniform.view_proj * o_pos;
 }

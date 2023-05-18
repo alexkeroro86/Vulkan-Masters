@@ -98,6 +98,28 @@ void RayQueriesSceneGraph::render(float delta_time)
 	draw();
 }
 
+void RayQueriesSceneGraph::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	if (drawer.header("Light"))
+	{
+		if (drawer.slider_float("X", &(global_uniform.light_position.x), -1, 1))
+		{
+		}
+
+		if (drawer.slider_float("Y", &(global_uniform.light_position.y), -1, 1))
+		{
+		}
+
+		if (drawer.slider_float("Z", &(global_uniform.light_position.z), -1, 1))
+		{
+		}
+
+		if (drawer.slider_float("W", &(global_uniform.light_position.z), -1, 1))
+		{
+		}
+	}
+}
+
 void RayQueriesSceneGraph::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
@@ -341,7 +363,7 @@ void RayQueriesSceneGraph::update_uniform_buffers()
 	global_uniform.camera_position = glm::vec4(scene_camera->get_node()->get_transform().get_translation(), 1);
 	// NOTE: Using Reversed depth-buffer for increased precision
 	global_uniform.view_proj       = scene_camera->get_pre_rotation() * vkb::vulkan_style_projection(scene_camera->get_projection()) * scene_camera->get_view();
-	global_uniform.light_position = scene_camera->get_node()->get_transform().get_world_matrix() * glm::vec4(0, 0, -100, 1);
+	//global_uniform.light_position = scene_camera->get_node()->get_transform().get_world_matrix() * glm::vec4(0, 0, -100, 1);
 
 	uniform_buffer->update(&global_uniform, sizeof(global_uniform));
 }
