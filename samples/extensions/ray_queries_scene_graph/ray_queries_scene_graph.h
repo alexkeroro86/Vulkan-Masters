@@ -40,6 +40,7 @@ class RayQueriesSceneGraph : public ApiVulkanSample
 	void render(float delta_time) override;
 	bool prepare(vkb::Platform &platform) override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	virtual void input_event(const vkb::InputEvent &input_event) override;
 
   private:
 	struct GlobalUniform
@@ -47,6 +48,7 @@ class RayQueriesSceneGraph : public ApiVulkanSample
 		glm::mat4x4 view_proj;
 		glm::vec4 camera_position;
 		glm::vec4   light_position{0, 1, 0, 0};
+		glm::vec4   frame_info{0, 0, 0, 0};
 	} global_uniform;
 
 	std::chrono::high_resolution_clock::time_point start_time{std::chrono::high_resolution_clock::now()};
@@ -56,7 +58,7 @@ class RayQueriesSceneGraph : public ApiVulkanSample
 
 	// Ray tracing structures
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR  acceleration_structure_features{};
-	vkb::sg::Camera* scene_camera;
+	vkb::sg::Node* camera_node;
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};

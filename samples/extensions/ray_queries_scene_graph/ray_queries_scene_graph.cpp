@@ -25,6 +25,7 @@
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/perspective_camera.h"
+#include "scene_graph/scripts/free_camera.h"
 
 namespace
 {
@@ -95,6 +96,10 @@ void RayQueriesSceneGraph::render(float delta_time)
 		return;
 	}
 
+	camera_node->get_component<vkb::sg::Script>().update(delta_time);
+
+	update_uniform_buffers();
+
 	draw();
 }
 
@@ -114,9 +119,30 @@ void RayQueriesSceneGraph::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 		}
 
-		if (drawer.slider_float("Extra", &(global_uniform.light_position.z), 0, 5))
+		if (drawer.slider_float("Extra", &(global_uniform.light_position.w), 0, 5))
 		{
 		}
+	}
+
+	if (drawer.header("Camera"))
+	{
+	}
+}
+
+void RayQueriesSceneGraph::input_event(const vkb::InputEvent& input_event)
+{
+	Application::input_event(input_event);
+
+	bool gui_captures_event = false;
+
+	if (gui)
+	{
+		gui_captures_event = gui->input_event(input_event);
+	}
+
+	if (!gui_captures_event)
+	{
+		camera_node->get_component<vkb::sg::Script>().input_event(input_event);
 	}
 }
 
@@ -154,7 +180,6 @@ void RayQueriesSceneGraph::build_command_buffers()
 
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
-		update_uniform_buffers();
 		
 		for (auto& mesh : scene->get_components<vkb::sg::Mesh>())
 		{
@@ -214,9 +239,8 @@ bool RayQueriesSceneGraph::prepare(vkb::Platform &platform)
 	load_scene("scenes/Bistro_v5_2/BistroExterior.gltf");
 
 	// Attach a move script to the camera component in the scene
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
-	camera_node.get_transform().set_translation(glm::vec3(-10, 5, 0));
-	scene_camera      = &camera_node.get_component<vkb::sg::Camera>();
+	camera_node = &vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	camera_node->get_transform().set_translation(glm::vec3(-10, 5, 0));
 
 	create_uniforms();
 	create_descriptor_pool();
@@ -245,7 +269,8 @@ void RayQueriesSceneGraph::create_descriptor_pool()
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
-	pipeline_layout_create_info.pPushConstantRanges        = &vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, static_cast<uint32_t>(sizeof(glm::mat4)), 0);
+	auto                       push_constant_range         = vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, static_cast<uint32_t>(sizeof(glm::mat4)), 0);
+	pipeline_layout_create_info.pPushConstantRanges        = &push_constant_range;
 	pipeline_layout_create_info.pushConstantRangeCount     = 1;
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
@@ -360,10 +385,11 @@ void RayQueriesSceneGraph::create_uniforms()
 void RayQueriesSceneGraph::update_uniform_buffers()
 {
 	assert(!!uniform_buffer);
-	global_uniform.camera_position = glm::vec4(scene_camera->get_node()->get_transform().get_translation(), 1);
+	auto& scene_camera              = camera_node->get_component<vkb::sg::Camera>();
+	global_uniform.camera_position = glm::vec4(scene_camera.get_node()->get_transform().get_translation(), 1);
 	// NOTE: Using Reversed depth-buffer for increased precision
-	global_uniform.view_proj       = scene_camera->get_pre_rotation() * vkb::vulkan_style_projection(scene_camera->get_projection()) * scene_camera->get_view();
-	//global_uniform.light_position = scene_camera->get_node()->get_transform().get_world_matrix() * glm::vec4(0, 0, -100, 1);
+	global_uniform.view_proj       = scene_camera.get_pre_rotation() * vkb::vulkan_style_projection(scene_camera.get_projection()) * scene_camera.get_view();
+	global_uniform.frame_info.x++;
 
 	uniform_buffer->update(&global_uniform, sizeof(global_uniform));
 }
