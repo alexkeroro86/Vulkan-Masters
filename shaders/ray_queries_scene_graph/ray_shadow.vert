@@ -11,9 +11,12 @@ layout(set = 0, binding = 1) uniform GlobalUniform
 	mat4 view_proj;
 	vec4 camera_position;
 	vec4 light_position;
-	vec4 frame_info;
+	vec4 frame;
 }
 global_uniform;
+
+// http://momentsingraphics.de/BlueNoise.html
+layout(set = 0, binding = 2) uniform sampler2D texture_sampler;
 
 layout(push_constant) uniform MeshData
 {

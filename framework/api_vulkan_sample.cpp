@@ -968,7 +968,7 @@ VkDescriptorImageInfo ApiVulkanSample::create_descriptor(Texture &texture, VkDes
 	return descriptor;
 }
 
-Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type)
+Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type, VkFilter filter)
 {
 	Texture texture{};
 
@@ -1043,8 +1043,8 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 	// Create a defaultsampler
 	VkSamplerCreateInfo sampler_create_info = {};
 	sampler_create_info.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	sampler_create_info.magFilter           = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter           = VK_FILTER_LINEAR;
+	sampler_create_info.magFilter           = filter;
+	sampler_create_info.minFilter           = filter;
 	sampler_create_info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -1059,7 +1059,7 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 	// This may have an impact on performance, esp. on lower-specced devices
 	// In a real-world scenario the level of anisotropy should be a user setting or e.g. lowered for mobile devices by default
 	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_requested_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 
@@ -1160,7 +1160,7 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
 	// Only enable anisotropic filtering if enabled on the devicec
 	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_requested_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 
@@ -1261,7 +1261,7 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
 	// Only enable anisotropic filtering if enabled on the devicec
 	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_requested_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 

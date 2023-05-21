@@ -194,7 +194,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @param file The filename of the texture to load
 	 * @param content_type The type of content in the image file
 	 */
-	Texture load_texture(const std::string &file, vkb::sg::Image::ContentType content_type);
+	Texture load_texture(const std::string &file, vkb::sg::Image::ContentType content_type, VkFilter filter = VK_FILTER_LINEAR);
 
 	/**
 	 * @brief Laods in a ktx 2D texture array

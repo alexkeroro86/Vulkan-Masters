@@ -119,13 +119,18 @@ void RayQueriesSceneGraph::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 		}
 
-		if (drawer.slider_float("Extra", &(global_uniform.light_position.w), 0, 5))
+		if (drawer.slider_float("Parameter", &(global_uniform.light_position.w), 0, 5))
 		{
 		}
 	}
 
-	if (drawer.header("Camera"))
+	if (drawer.header("Noise"))
 	{
+		int32_t noise_type = global_uniform.frame.w;
+		if (drawer.slider_int("Type", &noise_type, 0, 3))
+		{
+			global_uniform.frame.w = noise_type;
+		}
 	}
 }
 
@@ -256,14 +261,15 @@ void RayQueriesSceneGraph::create_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    {VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1},
-	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
+	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+	    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}};
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 1);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings =
-	    {
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
-	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1)};
+	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1),
+			vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
@@ -302,9 +308,18 @@ void RayQueriesSceneGraph::create_descriptor_sets()
 
 	VkWriteDescriptorSet uniform_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &buffer_descriptor);
 
+	// Blue noise screen space texture
+	//texture = load_texture("textures/BlueNoise64Tiled.png", vkb::sg::Image::ContentType::Color, VK_FILTER_NEAREST);
+	texture = load_texture("textures/BlueNoise.png", vkb::sg::Image::ContentType::Color, VK_FILTER_NEAREST);
+
+	VkDescriptorImageInfo image_descriptor = create_descriptor(texture, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
+	VkWriteDescriptorSet image_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &image_descriptor, 1);
+
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    acceleration_structure_write,
 	    uniform_buffer_write,
+		image_write,
 	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 }
@@ -389,7 +404,10 @@ void RayQueriesSceneGraph::update_uniform_buffers()
 	global_uniform.camera_position = glm::vec4(scene_camera.get_node()->get_transform().get_translation(), 1);
 	// NOTE: Using Reversed depth-buffer for increased precision
 	global_uniform.view_proj       = scene_camera.get_pre_rotation() * vkb::vulkan_style_projection(scene_camera.get_projection()) * scene_camera.get_view();
-	global_uniform.frame_info.x++;
+	
+	global_uniform.frame.z++;
+	global_uniform.frame.x = get_render_context().get_surface_extent().width;
+	global_uniform.frame.y = get_render_context().get_surface_extent().height;
 
 	uniform_buffer->update(&global_uniform, sizeof(global_uniform));
 }

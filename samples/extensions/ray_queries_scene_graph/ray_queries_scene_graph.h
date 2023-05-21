@@ -46,9 +46,9 @@ class RayQueriesSceneGraph : public ApiVulkanSample
 	struct GlobalUniform
 	{
 		glm::mat4x4 view_proj;
-		glm::vec4 camera_position;
+		glm::vec4   camera_position;
 		glm::vec4   light_position{0, 1, 0, 0};
-		glm::vec4   frame_info{0, 0, 0, 0};
+		glm::vec4   frame{0, 0, 0, 0};
 	} global_uniform;
 
 	std::chrono::high_resolution_clock::time_point start_time{std::chrono::high_resolution_clock::now()};
@@ -59,6 +59,7 @@ class RayQueriesSceneGraph : public ApiVulkanSample
 	// Ray tracing structures
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR  acceleration_structure_features{};
 	vkb::sg::Node* camera_node;
+	Texture                                           texture;
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
