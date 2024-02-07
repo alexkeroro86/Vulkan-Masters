@@ -141,7 +141,7 @@ bool intersects_directional_light(vec3 ray_origin, inout vec3 direction)
     }
     else {
         float blue_noise = texture(texture_sampler, gl_FragCoord.xy / 1024.0f).r;
-        blue_noise = fract(blue_noise + GOLDEN_RATIO * global_uniform.frame.z);
+        blue_noise = fract(blue_noise + GOLDEN_RATIO * mod(global_uniform.frame.z, 64));
         float theta = blue_noise * 2.0f * PI;
         float cos_theta = cos(theta);
         float sin_theta = sin(theta);
